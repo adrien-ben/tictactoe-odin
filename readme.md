@@ -4,9 +4,9 @@ First simple project to discover the language and raylib.
 
 ## How to play 
 
-- Click on the board to place a pawn
+- Click on the board or move with ⬆️⬇️⬅️➡️ and press Enter to place a pawn 
 - The goal is to align 3 pawns of the same type
-- Click the header to restart !
+- Click the header or press Enter to restart !
 
 ## How to run 
 

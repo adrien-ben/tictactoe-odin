@@ -20,7 +20,7 @@ GRID_THICKNESS :: 3
 PAWN_SIZE :: WINDOW_WIDTH / 10
 PAWN_THICKNESS :: 6
 
-RESTART_MSG: cstring : "(Click here to restart)"
+RESTART_MSG: cstring : "Click here/press Enter to restart"
 
 Board :: distinct [3][3]Pawn
 
@@ -63,41 +63,61 @@ main :: proc() {
 	board := create_empty_board()
 	state := create_play_state()
 
+	hovered_cell: [2]int
+
 	for !rl.WindowShouldClose() {
 		// Logic
-		if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) {
-			mouse_pos := rl.GetMousePosition()
+		mouse_pos := rl.GetMousePosition()
 
-			switch &s in state {
-			case PlayState:
+		switch &s in state {
+		case PlayState:
+			if (rl.GetMouseDelta() != {0, 0} || rl.IsMouseButtonPressed(rl.MouseButton.LEFT)) &&
+			   mouse_pos.y > HEADER_HEIGHT {
+				hovered_cell.x = int(mouse_pos.x) / (WINDOW_WIDTH / 3)
+				hovered_cell.y = (int(mouse_pos.y) - HEADER_HEIGHT) / (WINDOW_WIDTH / 3)
+			}
+
+			if rl.IsKeyPressed(rl.KeyboardKey.UP) {
+				hovered_cell.y -= 1
+			} else if rl.IsKeyPressed(rl.KeyboardKey.DOWN) {
+				hovered_cell.y += 1
+			} else if rl.IsKeyPressed(rl.KeyboardKey.LEFT) {
+				hovered_cell.x -= 1
+			} else if rl.IsKeyPressed(rl.KeyboardKey.RIGHT) {
+				hovered_cell.x += 1
+			}
+
+			hovered_cell.x = clamp(hovered_cell.x, 0, 2)
+			hovered_cell.y = clamp(hovered_cell.y, 0, 2)
+
+			if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) ||
+			   rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
+
 				p := s.player
-				if mouse_pos.y > HEADER_HEIGHT {
-					grid_x := int(mouse_pos.x) / (WINDOW_WIDTH / 3)
-					grid_y := (int(mouse_pos.y) - HEADER_HEIGHT) / (WINDOW_WIDTH / 3)
+				if board[hovered_cell.y][hovered_cell.x] == .None {
+					board[hovered_cell.y][hovered_cell.x] = p
 
-					if board[grid_y][grid_x] == .None {
-						board[grid_y][grid_x] = p
-
-						if (has_won(&board, p, grid_x, grid_y)) {
-							state = WinState {
-								winner = p,
-							}
-						} else if is_board_full(&board) {
-							state = WinState {
-								winner = .None,
-							}
-						} else {
-							s.player = s.player == .O ? .X : .O
+					if (has_won(&board, p, hovered_cell.x, hovered_cell.y)) {
+						state = WinState {
+							winner = p,
 						}
+					} else if is_board_full(&board) {
+						state = WinState {
+							winner = .None,
+						}
+					} else {
+						s.player = s.player == .O ? .X : .O
 					}
 				}
-			case WinState:
-				if mouse_pos.y < HEADER_HEIGHT {
-					board = create_empty_board()
-					state = create_play_state()
-				}
+			}
+		case WinState:
+			if (mouse_pos.y < HEADER_HEIGHT && rl.IsMouseButtonPressed(rl.MouseButton.LEFT)) ||
+			   rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
+				board = create_empty_board()
+				state = create_play_state()
 			}
 		}
+
 
 		// Render 
 		rl.BeginDrawing()
@@ -105,6 +125,9 @@ main :: proc() {
 
 		render_header(&state)
 		render_board(&board)
+		if ps, ok := state.(PlayState); ok {
+			render_hovered_cell(hovered_cell, ps.player)
+		}
 
 		rl.EndDrawing()
 	}
@@ -230,4 +253,20 @@ render_board :: proc(board: ^Board) {
 
 		}
 	}
+}
+
+render_hovered_cell :: proc(pos: [2]int, p: Pawn) {
+	if pos.x < 0 || pos.x > 2 || pos.y < 0 || pos.y > 2 {
+		return
+	}
+	rl.DrawRectangleLinesEx(
+		rl.Rectangle {
+			x = f32(pos.x * WINDOW_WIDTH / 3),
+			y = f32(HEADER_HEIGHT + pos.y * GRID_HEIGHT / 3),
+			width = WINDOW_WIDTH / 3,
+			height = GRID_HEIGHT / 3,
+		},
+		PAWN_THICKNESS,
+		pawn_color[p],
+	)
 }
