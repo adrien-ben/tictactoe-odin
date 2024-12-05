@@ -40,7 +40,9 @@ PlayState :: struct {
 }
 
 WinState :: struct {
-	winner: Pawn,
+	winner:             Pawn,
+	line:               [2][2]int,
+	crossing_animation: Animation,
 }
 
 player_turn_msg := #partial [Pawn]cstring {
@@ -60,15 +62,25 @@ pawn_color := #partial [Pawn]rl.Color {
 main :: proc() {
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, TITLE)
 
-	board := create_empty_board()
+	logic_board: Board
+	anination_board: AnimationBoard
+
 	state := create_play_state()
 
 	hovered_cell: [2]int
 
 	for !rl.WindowShouldClose() {
-		// Logic
+		frametime_s := rl.GetFrameTime()
 		mouse_pos := rl.GetMousePosition()
 
+		// Update animations
+		for i in 0 ..= 2 {
+			for j in 0 ..= 2 {
+				advance_animation(&anination_board[i][j], frametime_s)
+			}
+		}
+
+		// Logic
 		switch &s in state {
 		case PlayState:
 			if (rl.GetMouseDelta() != {0, 0} || rl.IsMouseButtonPressed(rl.MouseButton.LEFT)) &&
@@ -94,14 +106,17 @@ main :: proc() {
 			   rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
 
 				p := s.player
-				if board[hovered_cell.y][hovered_cell.x] == .None {
-					board[hovered_cell.y][hovered_cell.x] = p
+				if logic_board[hovered_cell.y][hovered_cell.x] == .None {
+					logic_board[hovered_cell.y][hovered_cell.x] = p
+					anination_board[hovered_cell.y][hovered_cell.x] = create_pawn_animation()
 
-					if (has_won(&board, p, hovered_cell.x, hovered_cell.y)) {
+					if won, line := has_won(&logic_board, p, hovered_cell.x, hovered_cell.y); won {
 						state = WinState {
-							winner = p,
+							winner             = p,
+							line               = line,
+							crossing_animation = create_crossing_animation(),
 						}
-					} else if is_board_full(&board) {
+					} else if is_board_full(&logic_board) {
 						state = WinState {
 							winner = .None,
 						}
@@ -113,20 +128,26 @@ main :: proc() {
 		case WinState:
 			if (mouse_pos.y < HEADER_HEIGHT && rl.IsMouseButtonPressed(rl.MouseButton.LEFT)) ||
 			   rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
-				board = create_empty_board()
+				logic_board = Board{}
+				anination_board = AnimationBoard{}
 				state = create_play_state()
+			} else {
+				advance_animation(&s.crossing_animation, frametime_s)
 			}
 		}
-
 
 		// Render 
 		rl.BeginDrawing()
 		rl.ClearBackground(BG_COLOR)
 
 		render_header(&state)
-		render_board(&board)
+		render_grid()
+		render_board(&logic_board, &anination_board)
 		if ps, ok := state.(PlayState); ok {
 			render_hovered_cell(hovered_cell, ps.player)
+		}
+		if vs, ok := state.(WinState); ok && vs.winner != .None {
+			render_crossing_line(vs.line, vs.crossing_animation, pawn_color[vs.winner])
 		}
 
 		rl.EndDrawing()
@@ -139,18 +160,26 @@ create_play_state :: proc() -> State {
 	return PlayState{player = Pawn(rand.int_max(len(Pawn) - 1) + 1)}
 }
 
-create_empty_board :: proc() -> Board {
-	return Board{0 ..= 2 = {0 ..= 2 = .None}}
-}
+has_won :: proc(board: ^Board, p: Pawn, x: int, y: int) -> (won: bool = true, line: [2][2]int) {
+	if board[y][0] == p && board[y][1] == p && board[y][2] == p {
+		line = {{y, 0}, {y, 2}}
+		return
+	}
+	if board[0][x] == p && board[1][x] == p && board[2][x] == p {
+		line = {{0, x}, {2, x}}
+		return
+	}
+	if board[0][0] == p && board[1][1] == p && board[2][2] == p {
+		line = {{0, 0}, {2, 2}}
+		return
+	}
+	if board[2][0] == p && board[1][1] == p && board[0][2] == p {
+		line = {{2, 0}, {0, 2}}
+		return
+	}
 
-has_won :: proc(board: ^Board, p: Pawn, x: int, y: int) -> bool {
-	return(
-		(board[y][0] == p && board[y][1] == p && board[y][2] == p) ||
-		(board[0][x] == p && board[1][x] == p && board[2][x] == p) ||
-		(board[0][0] == p && board[1][1] == p && board[2][2] == p) ||
-		(board[2][0] == p && board[1][1] == p && board[0][2] == p) \
-	)
-
+	won = false
+	return
 }
 
 is_board_full :: proc(board: ^Board) -> bool {
@@ -189,8 +218,7 @@ render_header :: proc(state: ^State) {
 	}
 }
 
-render_board :: proc(board: ^Board) {
-	// Draw Grid
+render_grid :: proc() {
 	grid_pad :: 10
 	rl.DrawLineEx(
 		rl.Vector2{WINDOW_WIDTH / 3, HEADER_HEIGHT + grid_pad},
@@ -216,42 +244,45 @@ render_board :: proc(board: ^Board) {
 		GRID_THICKNESS,
 		LINES_COLOR,
 	)
+}
 
-	// draw pawns
+render_board :: proc(board: ^Board, animations: ^AnimationBoard) {
 	for r in 0 ..= 2 {
 		for c in 0 ..= 2 {
 			p := board[r][c]
 			if p != .None {
+				anim := animations[r][c]
 				center_x := f32(c * WINDOW_WIDTH / 3) + WINDOW_WIDTH / 6
 				center_y := f32(r * GRID_HEIGHT / 3) + GRID_HEIGHT / 6 + HEADER_HEIGHT
-				color := pawn_color[p]
+				center := rl.Vector2{center_x, center_y}
 
-				if p == .X {
-					rl.DrawLineEx(
-						rl.Vector2{center_x - PAWN_SIZE, center_y - PAWN_SIZE},
-						rl.Vector2{center_x + PAWN_SIZE, center_y + PAWN_SIZE},
-						PAWN_THICKNESS,
-						color,
-					)
-					rl.DrawLineEx(
-						rl.Vector2{center_x - PAWN_SIZE, center_y + PAWN_SIZE},
-						rl.Vector2{center_x + PAWN_SIZE, center_y - PAWN_SIZE},
-						PAWN_THICKNESS,
-						color,
-					)
+				if is_animation_completed(anim) {
+					render_pawn(center, p)
 				} else {
-					rl.DrawCircle(i32(center_x), i32(center_y), PAWN_SIZE, color)
-					rl.DrawCircle(
-						i32(center_x),
-						i32(center_y),
-						PAWN_SIZE - PAWN_THICKNESS,
-						BG_COLOR,
-					)
+					render_pawn_animation(anim, p, center)
 				}
 			}
-
-
 		}
+	}
+}
+
+render_pawn :: proc(center: rl.Vector2, pawn: Pawn) {
+	if pawn == .X {
+		rl.DrawLineEx(
+			rl.Vector2{center.x - PAWN_SIZE, center.y - PAWN_SIZE},
+			rl.Vector2{center.x + PAWN_SIZE, center.y + PAWN_SIZE},
+			PAWN_THICKNESS,
+			pawn_color[pawn],
+		)
+		rl.DrawLineEx(
+			rl.Vector2{center.x - PAWN_SIZE, center.y + PAWN_SIZE},
+			rl.Vector2{center.x + PAWN_SIZE, center.y - PAWN_SIZE},
+			PAWN_THICKNESS,
+			pawn_color[pawn],
+		)
+	} else if pawn == .O {
+		rl.DrawCircle(i32(center.x), i32(center.y), PAWN_SIZE, pawn_color[pawn])
+		rl.DrawCircle(i32(center.x), i32(center.y), PAWN_SIZE - PAWN_THICKNESS, BG_COLOR)
 	}
 }
 
@@ -269,4 +300,16 @@ render_hovered_cell :: proc(pos: [2]int, p: Pawn) {
 		PAWN_THICKNESS,
 		pawn_color[p],
 	)
+}
+
+render_crossing_line :: proc(line: [2][2]int, anim: Animation, color: rl.Color) {
+	start_x := f32(line[0].y * WINDOW_WIDTH / 3) + WINDOW_WIDTH / 6
+	start_y := f32(line[0].x * GRID_HEIGHT / 3) + GRID_HEIGHT / 6 + HEADER_HEIGHT
+	start := rl.Vector2{start_x, start_y}
+
+	end_x := f32(line[1].y * WINDOW_WIDTH / 3) + WINDOW_WIDTH / 6
+	end_y := f32(line[1].x * GRID_HEIGHT / 3) + GRID_HEIGHT / 6 + HEADER_HEIGHT
+	end := rl.Vector2{end_x, end_y}
+
+	render_animated_line(anim, start, end, color, PAWN_THICKNESS)
 }
