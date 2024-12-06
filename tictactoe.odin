@@ -12,6 +12,7 @@ FONT_SIZE :: 50
 BG_COLOR :: rl.Color{200, 200, 200, 255}
 LINES_COLOR :: rl.BLACK
 TEXT_COLOR :: rl.BLACK
+HOVER_COLOR :: rl.Color{150, 150, 150, 127}
 
 HEADER_HEIGHT :: 100
 GRID_HEIGHT :: WINDOW_HEIGHT - HEADER_HEIGHT
@@ -299,6 +300,15 @@ render_hovered_cell :: proc(pos: [2]int, p: Pawn) {
 		},
 		PAWN_THICKNESS,
 		pawn_color[p],
+	)
+	rl.DrawRectangleRec(
+		rl.Rectangle {
+			x = f32(pos.x * WINDOW_WIDTH / 3),
+			y = f32(HEADER_HEIGHT + pos.y * GRID_HEIGHT / 3),
+			width = WINDOW_WIDTH / 3,
+			height = GRID_HEIGHT / 3,
+		},
+		HOVER_COLOR,
 	)
 }
 
