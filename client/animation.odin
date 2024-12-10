@@ -1,6 +1,8 @@
-package main
+package client
 
 import rl "vendor:raylib"
+
+import "../common"
 
 PAWN_ANIMATION_TIME_S :: 0.2
 CROSSING_ANIMATION_TIME_S :: 0.3
@@ -32,7 +34,7 @@ create_pawn_animation :: proc() -> Animation {
 	return {duration_s = PAWN_ANIMATION_TIME_S}
 }
 
-render_pawn_animation :: proc(anim: Animation, pawn: Pawn, center: rl.Vector2) {
+render_pawn_animation :: proc(anim: Animation, pawn: common.Pawn, center: rl.Vector2) {
 	if pawn == .X {
 		render_cross_animation(anim, center, PAWN_SIZE, PAWN_THICKNESS, pawn_color[pawn])
 	} else if pawn == .O {
