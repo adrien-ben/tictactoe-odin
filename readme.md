@@ -2,6 +2,8 @@
 
 First simple project to discover the language and raylib.
 
+This is a simple network tictactoe game. It uses TCP sockets.
+
 ## How to play 
 
 - Click on the board or move with ⬆️⬇️⬅️➡️ and press Enter to place a pawn 
@@ -10,6 +12,16 @@ First simple project to discover the language and raylib.
 
 ## How to run 
 
+### the server
+
+```sh
+odin run ./server/
 ```
-odin run .
+
+### the client
+
+Build it then start the executable twice
+
+```sh
+odin build ./client/
 ```
