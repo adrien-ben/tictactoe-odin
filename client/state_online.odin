@@ -48,7 +48,12 @@ destroy_online_state :: proc(s: ^OnlineGameState) {
 	delete(s.payloads)
 }
 
-update_online_state :: proc(s: ^OnlineGameState) {
+update_online_state :: proc(s: ^OnlineGameState) -> Transition {
+
+	if rl.IsKeyPressed(rl.KeyboardKey.ESCAPE) {
+		return .Back
+	}
+
 	frametime_s := rl.GetFrameTime()
 	mouse_pos := rl.GetMousePosition()
 
@@ -154,12 +159,17 @@ update_online_state :: proc(s: ^OnlineGameState) {
 			advance_animation(&s.crossing_animation, frametime_s)
 		}
 	}
+
+	return .None
+}
+
+resume_online_state :: proc(s: ^OnlineGameState) {
 }
 
 render_online_state :: proc(s: ^OnlineGameState) {
 	rl.ClearBackground(BG_COLOR)
 
-	render_header(&s.game_state, s.pawn)
+	render_ingame_header(&s.game_state, s.pawn)
 	render_grid()
 
 	switch &st in s.game_state {

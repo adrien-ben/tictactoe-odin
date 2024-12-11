@@ -35,7 +35,7 @@ pawn_color := #partial [common.Pawn]rl.Color {
 	.X = rl.BLUE,
 }
 
-render_header :: proc(state: ^GameState, pawn: common.Pawn) {
+render_ingame_header :: proc(state: ^GameState, pawn: common.Pawn) {
 	rl.DrawRectangleLines(0, 0, WINDOW_WIDTH, HEADER_HEIGHT, LINES_COLOR)
 
 	text: cstring
@@ -54,9 +54,9 @@ render_header :: proc(state: ^GameState, pawn: common.Pawn) {
 	if s, ok := state.(WinState); ok {
 		msg := WAITING_MSG if s.ready else RESTART_MSG
 		font_size: i32 = (FONT_SIZE / 5) * 3
-		text_width := rl.MeasureText(msg, font_size)
-		text_x: i32 = WINDOW_WIDTH / 2 - text_width / 2
-		text_y: i32 = HEADER_HEIGHT - font_size
+		text_width = rl.MeasureText(msg, font_size)
+		text_x = WINDOW_WIDTH / 2 - text_width / 2
+		text_y = HEADER_HEIGHT - font_size
 		rl.DrawText(msg, text_x, text_y, font_size, TEXT_COLOR)
 	}
 }

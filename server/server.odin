@@ -29,8 +29,6 @@ main :: proc() {
 
 	state := common.create_play_state()
 
-	log.error(len(players))
-
 	// main loop
 	for {
 		// wait for all players

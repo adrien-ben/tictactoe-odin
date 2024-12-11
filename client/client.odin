@@ -16,20 +16,41 @@ main :: proc() {
 	log.info("Starting client.")
 
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, TITLE)
+	rl.SetExitKey(rl.KeyboardKey.KEY_NULL)
 
-	app_state: AppState = create_online_state()
+	states: [dynamic]AppState
+	defer delete(states)
 
-	for !rl.WindowShouldClose() {
+	append(&states, create_main_menu_state())
 
-		update_app_state(&app_state)
+	mainloop: for !rl.WindowShouldClose() {
 
+		// update current state and apply transition
+		switch update_app_state(&states[len(states) - 1]) {
+		case .Back:
+			s := pop(&states)
+			destroy_app_state(&s)
+
+			if len(states) < 1 {
+				break mainloop
+			}
+
+			resume_app_state(&states[len(states) - 1])
+		case .ToOnlineGame:
+			append(&states, create_online_state())
+		case .None:
+		}
+
+		// render
 		rl.BeginDrawing()
 		rl.ClearBackground(BG_COLOR)
-		render_app_state(&app_state)
+		render_app_state(&states[len(states) - 1])
 		rl.EndDrawing()
 	}
 
-	destroy_app_state(&app_state)
+	for &s in states {
+		destroy_app_state(&s)
+	}
 
 	rl.CloseWindow()
 
