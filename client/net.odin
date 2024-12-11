@@ -10,6 +10,7 @@ connect :: proc(
 	port: int,
 ) -> (
 	sock: net.TCP_Socket,
+	ack: common.ConnectAck,
 	err: net.Network_Error,
 ) {
 	log.info("Connecting to server...")
@@ -27,6 +28,26 @@ connect :: proc(
 		log.errorf("Failed to set socket to non blocking: %v.", err)
 		return
 	}
+
+	payloads: [dynamic]common.Payload
+	defer delete(payloads)
+
+	ack_count, ack_err := recv(sock, &payloads)
+	log.assertf(
+		ack_count == 1 && ack_err == nil,
+		"Failed to get player id from server. Ack count: %v. Err: %v.",
+		ack_count,
+		ack_err,
+	)
+
+	payload := pop_front(&payloads)
+	init_payload, is_server_payload := payload.(common.ServerPayload)
+	log.assertf(is_server_payload, "Received data is not initialization payload.")
+
+	is_ack: bool
+	ack, is_ack = init_payload.(common.ConnectAck)
+	log.assertf(is_ack, "Received data is not initialization payload.")
+
 	return
 }
 
