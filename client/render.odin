@@ -35,24 +35,14 @@ pawn_color := #partial [common.Pawn]rl.Color {
 	.X = rl.BLUE,
 }
 
-render_ingame_header :: proc(state: ^GameState, pawn: common.Pawn) {
+render_ingame_header :: proc(text: cstring, message: Maybe(cstring)) {
 	rl.DrawRectangleLines(0, 0, WINDOW_WIDTH, HEADER_HEIGHT, LINES_COLOR)
-
-	text: cstring
-	switch s in state {
-	case PlayState:
-		text = "Your turn" if s.my_turn else player_turn_msg[pawn]
-	case WinState:
-		text = win_msg[s.winner]
-	}
-
 	text_width := rl.MeasureText(text, FONT_SIZE)
 	text_x: i32 = WINDOW_WIDTH / 2 - text_width / 2
 	text_y: i32 = HEADER_HEIGHT / 2 - FONT_SIZE / 2
 	rl.DrawText(text, text_x, text_y, FONT_SIZE, TEXT_COLOR)
 
-	if s, ok := state.(WinState); ok {
-		msg := WAITING_MSG if s.ready else RESTART_MSG
+	if msg, ok := message.?; ok {
 		font_size: i32 = (FONT_SIZE / 5) * 3
 		text_width = rl.MeasureText(msg, font_size)
 		text_x = WINDOW_WIDTH / 2 - text_width / 2

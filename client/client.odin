@@ -36,6 +36,8 @@ main :: proc() {
 			}
 
 			resume_app_state(&states[len(states) - 1])
+		case .ToOfflineGame:
+			append(&states, create_offline_state())
 		case .ToOnlineGame:
 			append(&states, create_online_state())
 		case .None:

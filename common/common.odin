@@ -32,7 +32,15 @@ create_play_state :: proc() -> State {
 	return PlayState{board = Board{}, turn = 0, player = Pawn(rand.int_max(len(Pawn) - 1) + 1)}
 }
 
-has_won :: proc(board: ^Board, p: Pawn, x: u8, y: u8) -> (won: bool = true, line: [2][2]u8) {
+has_won :: proc(
+	board: ^Board,
+	p: Pawn,
+	#any_int x: u8,
+	#any_int y: u8,
+) -> (
+	won: bool = true,
+	line: [2][2]u8,
+) {
 	if board[0][y] == p && board[1][y] == p && board[2][y] == p {
 		line = {{0, y}, {2, y}}
 		return
