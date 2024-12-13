@@ -123,7 +123,7 @@ update_online_state :: proc(s: ^OnlineGameState) -> Transition {
 		st.hovered_cell.x = clamp(st.hovered_cell.x, 0, 2)
 		st.hovered_cell.y = clamp(st.hovered_cell.y, 0, 2)
 
-		if rl.IsMouseButtonPressed(.LEFT) || rl.IsKeyPressed(.ENTER) {
+		if st.my_turn && (rl.IsMouseButtonPressed(.LEFT) || rl.IsKeyPressed(.ENTER)) {
 
 			payload := common.ClientPayload {
 				pawn = s.pawn,
@@ -137,6 +137,13 @@ update_online_state :: proc(s: ^OnlineGameState) -> Transition {
 			if send_err != nil {
 				log.errorf("Failed to send data to server: %v.", send_err)
 				// TODO: handle disconnection
+			}
+			// update state to prevent percieved lag
+			// will be corrected by server's response if needed
+			if st.board[st.hovered_cell.x][st.hovered_cell.y] == .None {
+				st.board[st.hovered_cell.x][st.hovered_cell.y] = s.pawn
+				s.anination_board[st.hovered_cell.x][st.hovered_cell.y] = create_pawn_animation()
+				st.my_turn = false
 			}
 		}
 	case WinState:
