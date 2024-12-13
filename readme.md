@@ -15,7 +15,11 @@ This is a simple network tictactoe game. It uses TCP sockets.
 ### the server
 
 ```sh
+# to start on any available port
 odin run ./server/
+
+# or
+odin run ./server/ -- -port=<port>
 ```
 
 ### the client

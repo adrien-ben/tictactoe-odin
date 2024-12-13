@@ -1,7 +1,9 @@
 package server
 
+import "core:flags"
 import "core:log"
 import "core:net"
+import "core:os"
 import "core:time"
 
 import "../common"
@@ -12,6 +14,10 @@ Player :: struct {
 	connected: bool,
 }
 
+Args :: struct {
+	port: uint,
+}
+
 main :: proc() {
 	logger := log.create_console_logger()
 	defer log.destroy_console_logger(logger)
@@ -19,7 +25,10 @@ main :: proc() {
 
 	log.info("Starting server...")
 
-	socket := start_server()
+	args: Args
+	flags.parse_or_exit(&args, os.args[:])
+
+	socket := start_server(args.port)
 	defer net.close(socket)
 
 	players: [2]Player
@@ -125,9 +134,11 @@ main :: proc() {
 	log.info("Closing server.")
 }
 
-start_server :: proc() -> net.TCP_Socket {
-	endpoint, parsed := net.parse_endpoint("127.0.0.1:9090")
-	log.assertf(parsed, "Failed to parse endpoint.")
+start_server :: proc(port: uint) -> net.TCP_Socket {
+	endpoint := net.Endpoint {
+		address = net.IP4_Address{0, 0, 0, 0},
+		port    = int(port),
+	}
 
 	socket, err := net.listen_tcp(endpoint, backlog = 1000)
 	log.assertf(err == nil, "Failed to create tcp socket: %v.", err)
