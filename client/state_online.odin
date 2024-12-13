@@ -48,7 +48,7 @@ destroy_online_state :: proc(s: ^OnlineGameState) {
 
 update_online_state :: proc(s: ^OnlineGameState) -> Transition {
 
-	if rl.IsKeyPressed(rl.KeyboardKey.ESCAPE) {
+	if rl.IsKeyPressed(.ESCAPE) {
 		return .Back
 	}
 
@@ -104,26 +104,26 @@ update_online_state :: proc(s: ^OnlineGameState) -> Transition {
 	// Logic
 	switch &st in s.game_state {
 	case PlayState:
-		if (rl.GetMouseDelta() != {0, 0} || rl.IsMouseButtonPressed(rl.MouseButton.LEFT)) &&
+		if (rl.GetMouseDelta() != {0, 0} || rl.IsMouseButtonPressed(.LEFT)) &&
 		   mouse_pos.y > HEADER_HEIGHT {
 			st.hovered_cell.x = int(mouse_pos.x) / (WINDOW_WIDTH / 3)
 			st.hovered_cell.y = (int(mouse_pos.y) - HEADER_HEIGHT) / (WINDOW_WIDTH / 3)
 		}
 
-		if rl.IsKeyPressed(rl.KeyboardKey.UP) {
+		if rl.IsKeyPressed(.UP) {
 			st.hovered_cell.y -= 1
-		} else if rl.IsKeyPressed(rl.KeyboardKey.DOWN) {
+		} else if rl.IsKeyPressed(.DOWN) {
 			st.hovered_cell.y += 1
-		} else if rl.IsKeyPressed(rl.KeyboardKey.LEFT) {
+		} else if rl.IsKeyPressed(.LEFT) {
 			st.hovered_cell.x -= 1
-		} else if rl.IsKeyPressed(rl.KeyboardKey.RIGHT) {
+		} else if rl.IsKeyPressed(.RIGHT) {
 			st.hovered_cell.x += 1
 		}
 
 		st.hovered_cell.x = clamp(st.hovered_cell.x, 0, 2)
 		st.hovered_cell.y = clamp(st.hovered_cell.y, 0, 2)
 
-		if rl.IsMouseButtonPressed(rl.MouseButton.LEFT) || rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
+		if rl.IsMouseButtonPressed(.LEFT) || rl.IsKeyPressed(.ENTER) {
 
 			payload := common.ClientPayload {
 				pawn = s.pawn,
@@ -140,8 +140,8 @@ update_online_state :: proc(s: ^OnlineGameState) -> Transition {
 			}
 		}
 	case WinState:
-		if (mouse_pos.y < HEADER_HEIGHT && rl.IsMouseButtonPressed(rl.MouseButton.LEFT)) ||
-		   rl.IsKeyPressed(rl.KeyboardKey.ENTER) {
+		if (mouse_pos.y < HEADER_HEIGHT && rl.IsMouseButtonPressed(.LEFT)) ||
+		   rl.IsKeyPressed(.ENTER) {
 
 			send_err := send(
 				s.socket,

@@ -24,7 +24,7 @@ update_main_menu_state :: proc(s: ^MainMenuState) -> (t: Transition) {
 		t = .ToOnlineGame
 	}
 
-	if rl.IsKeyPressed(rl.KeyboardKey.ESCAPE) || s.exit {
+	if rl.IsKeyPressed(.ESCAPE) || s.exit {
 		t = .Back
 	}
 

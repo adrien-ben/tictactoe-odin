@@ -16,7 +16,7 @@ main :: proc() {
 	log.info("Starting client.")
 
 	rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, TITLE)
-	rl.SetExitKey(rl.KeyboardKey.KEY_NULL)
+	rl.SetExitKey(.KEY_NULL)
 
 	states: [dynamic]AppState
 	defer delete(states)
