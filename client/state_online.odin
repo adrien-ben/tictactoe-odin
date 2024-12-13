@@ -186,7 +186,8 @@ render_online_header :: proc(state: ^GameState, pawn: common.Pawn) {
 	text: cstring
 	switch s in state {
 	case PlayState:
-		text = "Your turn" if s.my_turn else player_turn_msg[pawn]
+		other_pawn: common.Pawn = .O if pawn == .X else .X
+		text = "Your turn" if s.my_turn else player_turn_msg[other_pawn]
 	case WinState:
 		text = win_msg[s.winner]
 	}
