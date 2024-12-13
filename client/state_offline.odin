@@ -22,7 +22,7 @@ destroy_offline_state :: proc(s: ^OfflineGameState) {
 update_offline_state :: proc(s: ^OfflineGameState) -> Transition {
 
 	if rl.IsKeyPressed(.ESCAPE) {
-		return .Back
+		return Back{}
 	}
 
 	frametime_s := rl.GetFrameTime()
@@ -94,7 +94,7 @@ update_offline_state :: proc(s: ^OfflineGameState) -> Transition {
 		}
 	}
 
-	return .None
+	return nil
 }
 
 resume_offline_state :: proc(s: ^OfflineGameState) {

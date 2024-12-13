@@ -26,8 +26,8 @@ main :: proc() {
 	mainloop: for !rl.WindowShouldClose() {
 
 		// update current state and apply transition
-		switch update_app_state(&states[len(states) - 1]) {
-		case .Back:
+		switch t in update_app_state(&states[len(states) - 1]) {
+		case Back:
 			s := pop(&states)
 			destroy_app_state(&s)
 
@@ -36,11 +36,11 @@ main :: proc() {
 			}
 
 			resume_app_state(&states[len(states) - 1])
-		case .ToOfflineGame:
+		case ToOfflineGame:
 			append(&states, create_offline_state())
-		case .ToOnlineGame:
-			append(&states, create_online_state())
-		case .None:
+		case ToOnlineGame:
+			append(&states, create_online_state(t.addr))
+		case nil:
 		}
 
 		// render

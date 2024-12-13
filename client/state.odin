@@ -51,9 +51,16 @@ destroy_app_state :: proc(state: ^AppState) {
 	}
 }
 
-Transition :: enum {
-	None,
+Transition :: union {
 	ToOfflineGame,
 	ToOnlineGame,
 	Back,
 }
+
+ToOfflineGame :: struct {}
+
+ToOnlineGame :: struct {
+	addr: ServerAddress,
+}
+
+Back :: struct {}

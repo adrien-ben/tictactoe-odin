@@ -15,10 +15,10 @@ OnlineGameState :: struct {
 	anination_board: AnimationBoard,
 }
 
-create_online_state :: proc() -> (s: OnlineGameState) {
+create_online_state :: proc(addr: ServerAddress) -> (s: OnlineGameState) {
 	ack: common.ConnectAck
 	err: net.Network_Error
-	s.socket, ack, err = connect(net.IP4_Address{127, 0, 0, 1}, 9090)
+	s.socket, ack, err = connect(addr)
 	log.assertf(err == nil, "Failed to connect to server: %v.", err)
 
 	s.pawn = ack.pawn
@@ -49,7 +49,7 @@ destroy_online_state :: proc(s: ^OnlineGameState) {
 update_online_state :: proc(s: ^OnlineGameState) -> Transition {
 
 	if rl.IsKeyPressed(.ESCAPE) {
-		return .Back
+		return Back{}
 	}
 
 	frametime_s := rl.GetFrameTime()
@@ -155,7 +155,7 @@ update_online_state :: proc(s: ^OnlineGameState) -> Transition {
 		}
 	}
 
-	return .None
+	return nil
 }
 
 resume_online_state :: proc(s: ^OnlineGameState) {

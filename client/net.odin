@@ -2,12 +2,53 @@ package client
 
 import "core:log"
 import "core:net"
+import "core:strconv"
+import "core:strings"
 
 import "../common"
 
+ServerAddress :: struct {
+	addr: [4]u8,
+	port: u16,
+}
+
+parse_address :: proc(s: string) -> (addr: ServerAddress, ok: bool) {
+	s := s
+	i: int
+	for addr_or_port in strings.split_iterator(&s, ":") {
+		if i == 0 {
+			j: int
+			addr_or_port := addr_or_port
+			for addr_part in strings.split_iterator(&addr_or_port, ".") {
+				if j > 3 do return
+
+				part := strconv.parse_uint(addr_part) or_return
+				if part > uint(max(u8)) do return
+
+				addr.addr[j] = u8(part)
+				j += 1
+			}
+
+			if j < 4 do return
+		} else if i == 1 {
+			port := strconv.parse_uint(addr_or_port) or_return
+			if port > uint(max(u16)) do return
+			addr.port = u16(port)
+			ok = true
+			return
+		} else {
+			ok = false
+			return
+		}
+
+		i += 1
+	}
+
+	return
+}
+
 connect :: proc(
-	address: net.Address,
-	port: int,
+	addr: ServerAddress,
 ) -> (
 	sock: net.TCP_Socket,
 	ack: common.ConnectAck,
@@ -15,8 +56,8 @@ connect :: proc(
 ) {
 	log.info("Connecting to server...")
 	endpoint := net.Endpoint {
-		address = address,
-		port    = port,
+		address = net.IP4_Address{addr.addr[0], addr.addr[1], addr.addr[2], addr.addr[3]},
+		port    = int(addr.port),
 	}
 	sock, err = net.dial_tcp_from_endpoint(endpoint)
 	if err != nil {
