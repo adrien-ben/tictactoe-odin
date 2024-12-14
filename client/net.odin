@@ -7,6 +7,9 @@ import "core:strings"
 
 import "../common"
 
+TCP_RECV_WOULD_BLOCK_ERR ::
+	net.TCP_Recv_Error.Would_Block when ODIN_OS == .Windows else net.TCP_Recv_Error.Timeout
+
 ServerAddress :: struct {
 	addr: [4]u8,
 	port: u16,
@@ -112,7 +115,7 @@ try_recv :: proc(
 		count = common.deserialize_packets(buf[:read], payloads)
 	}
 
-	if err == net.TCP_Recv_Error.Would_Block {
+	if err == TCP_RECV_WOULD_BLOCK_ERR {
 		err = nil
 	}
 
@@ -132,7 +135,7 @@ recv :: proc(
 		read, read_err := net.recv(socket, buf[:])
 
 		// error while reading
-		if err != nil && err != net.TCP_Recv_Error.Would_Block {
+		if err != nil && err != TCP_RECV_WOULD_BLOCK_ERR {
 			err = read_err
 			return
 		}

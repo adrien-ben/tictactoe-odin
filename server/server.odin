@@ -186,6 +186,14 @@ wait_for_player :: proc(
 		}
 
 		if accept_err == nil {
+			block_err := net.set_blocking(c.sock, false)
+			if block_err != nil {
+				log.errorf("Failed to set player's socket to non blocking: %v.", block_err)
+				return
+			}
+		}
+
+		if accept_err == nil {
 			log.info("Player connecting...")
 
 			payload: common.ConnectAck
@@ -223,7 +231,10 @@ read_all_packets :: proc(player: Player, payloads: ^[dynamic]common.Payload) -> 
 		common.deserialize_packets(buf[:read], payloads)
 	}
 
-	if net_err != nil && net_err != net.TCP_Recv_Error.Would_Block {
+	TCP_RECV_WOULD_BLOCK_ERR ::
+		net.TCP_Recv_Error.Would_Block when ODIN_OS == .Windows else net.TCP_Recv_Error.Timeout
+
+	if net_err != nil && net_err != TCP_RECV_WOULD_BLOCK_ERR {
 		log.errorf("Failed to read player command: %v", net_err)
 		return net_err
 	}
