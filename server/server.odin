@@ -155,6 +155,7 @@ start_server :: proc(port: uint) -> net.TCP_Socket {
 
 is_valid_move :: proc(mv: common.Move, state: common.PlayState, pawn: common.Pawn) -> bool {
 	return(
+		pawn != .None &&
 		mv.x <= 2 &&
 		mv.y <= 2 &&
 		state.board[mv.x][mv.y] == .None &&
